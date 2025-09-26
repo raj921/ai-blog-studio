@@ -31,6 +31,11 @@ export async function GET(request) {
             gpt5: 'Available',
             imageGeneration: 'Available', 
             storyblok: 'Available'
+          },
+          environment: {
+            EMERGENT_LLM_KEY: process.env.EMERGENT_LLM_KEY ? 'Present' : 'Missing',
+            NEXT_PUBLIC_STORYBLOK_SPACE_ID: process.env.NEXT_PUBLIC_STORYBLOK_SPACE_ID || 'Missing',
+            STORYBLOK_MANAGEMENT_TOKEN: process.env.STORYBLOK_MANAGEMENT_TOKEN ? 'Present' : 'Missing'
           }
         });
         
