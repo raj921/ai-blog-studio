@@ -27,6 +27,17 @@ export async function GET(request) {
         const posts = await getStoryblokBlogPosts();
         return NextResponse.json(posts);
         
+      case 'job-status':
+        const jobId = pathSegments[1];
+        if (!jobId) {
+          return NextResponse.json({ error: 'Job ID is required' }, { status: 400 });
+        }
+        const job = jobStore.get(jobId);
+        if (!job) {
+          return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+        }
+        return NextResponse.json(job);
+        
       case 'test':
         return NextResponse.json({ 
           message: 'AI Blog Studio API is working!',
