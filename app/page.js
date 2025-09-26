@@ -282,12 +282,19 @@ export default function AIBlogStudio() {
                     {/* Left Column - Topic Input */}
                     <div className="space-y-6">
                       <div>
-                        <Label className="text-base font-medium mb-3 block">Blog Topic & Ideas</Label>
-                        <AIPrompt
-                          onSubmit={handleTopicSubmit}
-                          placeholder="Describe your blog post idea in detail. What should it cover? What's the main message? Include any specific points you want to address..."
-                          isLoading={isGenerating}
-                        />
+                        <Label className="text-base font-medium mb-3 block">Blog Topic & Ideas *</Label>
+                        <div className="space-y-3">
+                          <Textarea
+                            value={formData.topic}
+                            onChange={(e) => handleInputChange('topic', e.target.value)}
+                            placeholder="Describe your blog post idea in detail. What should it cover? What's the main message? Include any specific points you want to address..."
+                            disabled={isGenerating}
+                            className="min-h-[120px] resize-none border-2 focus:border-purple-500/50 transition-all duration-300"
+                          />
+                          <div className="text-xs text-muted-foreground">
+                            💡 Tip: Be specific about your topic for better AI-generated content
+                          </div>
+                        </div>
                       </div>
                       
                       {formData.topic && (
