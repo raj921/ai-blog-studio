@@ -92,25 +92,9 @@ export default function AIBlogStudio() {
     setCurrentStep('Initializing AI Blog Studio...');
 
     try {
-      // Simulate progress updates
-      const steps = [
-        { progress: 20, step: 'Generating blog content with GPT-5...' },
-        { progress: 50, step: 'Creating hero image...' },
-        { progress: 80, step: 'Publishing to Storyblok CMS...' },
-        { progress: 100, step: 'Complete! Blog post ready.' }
-      ];
-
-      let stepIndex = 0;
-      const progressInterval = setInterval(() => {
-        if (stepIndex < steps.length) {
-          setProgress(steps[stepIndex].progress);
-          setCurrentStep(steps[stepIndex].step);
-          stepIndex++;
-        }
-      }, 2000);
-
-      console.log('📡 Making API request to /api/generate-complete');
+      console.log('📡 Starting blog generation job...');
       
+      // Step 1: Start the generation job
       const response = await fetch('/api/generate-complete', {
         method: 'POST',
         headers: {
@@ -122,43 +106,60 @@ export default function AIBlogStudio() {
         }),
       });
 
-      clearInterval(progressInterval);
-      
-      console.log('📥 Response received:', {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries())
-      });
+      const jobData = await response.json();
+      console.log('📥 Job started:', jobData);
 
-      // Check if response is empty or malformed
-      const responseText = await response.text();
-      console.log('📄 Raw response text:', responseText);
-
-      if (!responseText || responseText.trim() === '') {
-        throw new Error('Empty response from server');
+      if (!response.ok || !jobData.success) {
+        throw new Error(jobData.error || `HTTP ${response.status}: ${response.statusText}`);
       }
 
-      let result;
-      try {
-        result = JSON.parse(responseText);
-        console.log('✅ JSON parsed successfully:', result);
-      } catch (parseError) {
-        console.error('❌ JSON parsing failed:', parseError);
-        console.error('Response text that failed to parse:', responseText);
-        throw new Error(`Invalid JSON response: ${parseError.message}`);
+      const jobId = jobData.jobId;
+      console.log('🆔 Job ID:', jobId);
+
+      // Step 2: Poll for job status
+      let completed = false;
+      let attempts = 0;
+      const maxAttempts = 120; // 2 minutes max (120 * 1 second)
+
+      while (!completed && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+        attempts++;
+
+        try {
+          const statusResponse = await fetch(`/api/job-status/${jobId}`);
+          const statusData = await statusResponse.json();
+          
+          console.log('📊 Job status:', statusData);
+
+          if (statusResponse.ok) {
+            setProgress(statusData.progress || 0);
+            setCurrentStep(statusData.step || 'Processing...');
+
+            if (statusData.status === 'completed') {
+              console.log('✅ Job completed successfully');
+              setGeneratedContent(statusData.result);
+              setSuccess('Blog post generated and published successfully!');
+              setActiveTab('preview');
+              setProgress(100);
+              setCurrentStep('Complete! Your blog post is ready.');
+              completed = true;
+            } else if (statusData.status === 'failed') {
+              throw new Error(statusData.error || 'Generation failed');
+            }
+          } else {
+            console.warn('⚠️ Status check failed:', statusData);
+          }
+        } catch (statusError) {
+          console.warn('⚠️ Status polling error:', statusError);
+        }
       }
 
-      if (!response.ok) {
-        throw new Error(result.error || `HTTP ${response.status}: ${response.statusText}`);
+      if (!completed) {
+        throw new Error('Generation timed out. Please try again.');
       }
-      
-      setGeneratedContent(result.data);
-      setSuccess('Blog post generated and published successfully!');
-      setActiveTab('preview');
-      setProgress(100);
-      setCurrentStep('Complete! Your blog post is ready.');
 
     } catch (err) {
+      console.error('❌ Generation error:', err);
       setError(err.message);
       setProgress(0);
       setCurrentStep('');
