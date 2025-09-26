@@ -225,7 +225,7 @@ async function handlePublishToStoryblok(body) {
   }
 }
 
-async function handleGenerateComplete(body) {
+async function handleGenerateCompleteAsync(body) {
   const { title, topic, keywords, wordCount, tone } = body;
   
   if (!title || !topic) {
@@ -234,72 +234,27 @@ async function handleGenerateComplete(body) {
     }, { status: 400 });
   }
 
-  try {
-    // Step 1: Generate blog content
-    console.log('Step 1: Generating blog content...');
-    const blogContent = await generateBlogPost({
-      title,
-      topic,
-      keywords: keywords || [],
-      wordCount: wordCount || 800,
-      tone: tone || 'professional'
-    });
+  // Create a job ID and return it immediately
+  const jobId = uuidv4();
+  
+  // Initialize job status
+  jobStore.set(jobId, {
+    id: jobId,
+    status: 'started',
+    progress: 0,
+    step: 'Initializing blog generation...',
+    startTime: new Date().toISOString()
+  });
 
-    // Step 2: Generate hero image
-    console.log('Step 2: Generating hero image...');
-    let imageUrl = '';
-    if (blogContent.imagePrompt) {
-      const imageResult = await generateHeroImage(blogContent.imagePrompt, blogContent.title);
-      if (imageResult.success) {
-        imageUrl = imageResult.imageUrl;
-      }
-    }
+  // Start the async process (don't await it)
+  processCompleteGeneration(jobId, { title, topic, keywords, wordCount, tone });
 
-    // Step 3: Create in Storyblok  
-    console.log('Step 3: Creating blog post in Storyblok...');
-    let storyblokResult = null;
-    
-    try {
-      let storyblokImageUrl = '';
-      
-      // Upload image to Storyblok if we have one
-      if (imageUrl) {
-        const imagePath = `/app/public${imageUrl}`;
-        const filename = `blog-hero-${Date.now()}.png`;
-        
-        const uploadResult = await uploadImageToStoryblok(imagePath, filename);
-        if (uploadResult.success) {
-          storyblokImageUrl = uploadResult.url;
-        }
-      }
-      
-      // Create the blog post in Storyblok
-      const storyData = {
-        ...blogContent,
-        heroImage: storyblokImageUrl
-      };
-      
-      storyblokResult = await createStoryblokBlogPost(storyData);
-    } catch (storyblokError) {
-      console.warn('Storyblok creation failed:', storyblokError.message);
-      // Continue without Storyblok - we still have the generated content
-    }
-
-    return NextResponse.json({ 
-      success: true, 
-      data: {
-        blogContent,
-        imageUrl,
-        storyblokResult: storyblokResult || { success: false, error: 'Storyblok integration failed but content generated successfully' }
-      },
-      message: 'Complete blog generation finished'
-    });
-
-  } catch (error) {
-    return NextResponse.json({ 
-      error: `Complete generation failed: ${error.message}` 
-    }, { status: 500 });
-  }
+  // Return job ID immediately
+  return NextResponse.json({
+    success: true,
+    jobId: jobId,
+    message: 'Blog generation started'
+  });
 }
 
 async function handlePublishStory(storyId) {
