@@ -1,17 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   PenTool, 
   Image, 
@@ -19,11 +9,33 @@ import {
   Wand2, 
   CheckCircle2, 
   AlertCircle, 
-  Loader2,
   Copy,
   ExternalLink,
-  Sparkles
+  Sparkles,
+  Bot,
+  Zap,
+  Layers
 } from 'lucide-react';
+
+// Kokonut UI Components
+import AIPrompt from '@/components/kokonutui/ai-prompt';
+import AITextLoading from '@/components/kokonutui/ai-text-loading';
+import ShimmerText from '@/components/kokonutui/shimmer-text';
+import SmoothTab from '@/components/kokonutui/smooth-tab';
+import GradientButton from '@/components/kokonutui/gradient-button';
+import LiquidGlassCard from '@/components/kokonutui/liquid-glass-card';
+import BeamsBackground from '@/components/kokonutui/beams-background';
+
+// Existing components
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
 
 export default function AIBlogStudio() {
   const [formData, setFormData] = useState({
@@ -42,11 +54,24 @@ export default function AIBlogStudio() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  const tabs = [
+    { id: 'generator', label: 'Generate', icon: <Bot className="h-4 w-4" /> },
+    { id: 'preview', label: 'Preview', icon: <PenTool className="h-4 w-4" /> },
+    { id: 'published', label: 'Published', icon: <Upload className="h-4 w-4" /> }
+  ];
+
   const handleInputChange = (name, value) => {
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleTopicSubmit = (topic) => {
+    if (!formData.title) {
+      setFormData(prev => ({ ...prev, title: topic.slice(0, 100) }));
+    }
+    setFormData(prev => ({ ...prev, topic }));
   };
 
   const generateCompleteBlog = async () => {
@@ -148,255 +173,349 @@ export default function AIBlogStudio() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <BeamsBackground className="min-h-screen">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Sparkles className="h-8 w-8 text-blue-600" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <motion.div 
+            className="flex items-center justify-center gap-3 mb-6"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <motion.div
+              animate={{ 
+                rotate: [0, 360],
+                scale: [1, 1.1, 1]
+              }}
+              transition={{ 
+                duration: 4, 
+                repeat: Infinity,
+                ease: "linear"
+              }}
+            >
+              <Sparkles className="h-10 w-10 text-purple-600" />
+            </motion.div>
+            <ShimmerText className="text-5xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 bg-clip-text text-transparent">
               AI Blog Studio
-            </h1>
-          </div>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            </ShimmerText>
+          </motion.div>
+          <motion.p 
+            className="text-lg text-muted-foreground max-w-2xl mx-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.8 }}
+          >
             Generate complete blog posts with AI-powered content, hero images, and automatic Storyblok CMS publishing
-          </p>
+          </motion.p>
         </div>
 
         {/* Status Messages */}
-        {error && (
-          <Alert className="mb-6 border-red-200 bg-red-50">
-            <AlertCircle className="h-4 w-4 text-red-600" />
-            <AlertDescription className="text-red-800">{error}</AlertDescription>
-          </Alert>
-        )}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-6"
+            >
+              <Alert className="border-red-200 bg-red-50">
+                <AlertCircle className="h-4 w-4 text-red-600" />
+                <AlertDescription className="text-red-800">{error}</AlertDescription>
+              </Alert>
+            </motion.div>
+          )}
 
-        {success && (
-          <Alert className="mb-6 border-green-200 bg-green-50">
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800">{success}</AlertDescription>
-          </Alert>
-        )}
+          {success && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-6"
+            >
+              <Alert className="border-green-200 bg-green-50">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-800">{success}</AlertDescription>
+              </Alert>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Main Interface */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto">
-            <TabsTrigger value="generator" className="flex items-center gap-2">
-              <Wand2 className="h-4 w-4" />
-              Generate
-            </TabsTrigger>
-            <TabsTrigger value="preview" disabled={!generatedContent}>
-              <PenTool className="h-4 w-4" />
-              Preview
-            </TabsTrigger>
-            <TabsTrigger value="storyblok" disabled={!generatedContent?.storyblokResult?.success}>
-              <Upload className="h-4 w-4" />
-              Published
-            </TabsTrigger>
-          </TabsList>
+        <div className="space-y-8">
+          {/* Tab Navigation */}
+          <div className="flex justify-center">
+            <SmoothTab 
+              tabs={tabs}
+              defaultTab={activeTab}
+              onTabChange={setActiveTab}
+            />
+          </div>
 
           {/* Generation Tab */}
-          <TabsContent value="generator">
-            <Card className="max-w-2xl mx-auto">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Wand2 className="h-5 w-5 text-blue-600" />
-                  Blog Post Generator
-                </CardTitle>
-                <CardDescription>
-                  Enter your topic and let AI create a complete blog post with images
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <Label htmlFor="title">Blog Title *</Label>
-                    <Input
-                      id="title"
-                      value={formData.title}
-                      onChange={(e) => handleInputChange('title', e.target.value)}
-                      placeholder="Enter your blog post title..."
-                      disabled={isGenerating}
-                    />
+          {activeTab === 'generator' && (
+            <motion.div
+              key="generator"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.5 }}
+            >
+              <LiquidGlassCard className="max-w-4xl mx-auto">
+                <div className="space-y-8">
+                  <div className="text-center">
+                    <h2 className="text-2xl font-bold mb-2 flex items-center justify-center gap-2">
+                      <Bot className="h-6 w-6 text-purple-600" />
+                      Blog Post Generator
+                    </h2>
+                    <p className="text-muted-foreground">
+                      Enter your topic and let AI create a complete blog post with images
+                    </p>
                   </div>
-                  
-                  <div>
-                    <Label htmlFor="topic">Main Topic *</Label>
-                    <Textarea
-                      id="topic"
-                      value={formData.topic}
-                      onChange={(e) => handleInputChange('topic', e.target.value)}
-                      placeholder="Describe what your blog post should cover..."
-                      rows={3}
-                      disabled={isGenerating}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="keywords">Keywords (comma-separated)</Label>
-                    <Input
-                      id="keywords"
-                      value={formData.keywords}
-                      onChange={(e) => handleInputChange('keywords', e.target.value)}
-                      placeholder="SEO keywords, separated by commas"
-                      disabled={isGenerating}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="wordCount">Word Count</Label>
-                      <Select
-                        value={formData.wordCount.toString()}
-                        onValueChange={(value) => handleInputChange('wordCount', parseInt(value))}
-                        disabled={isGenerating}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="500">500 words</SelectItem>
-                          <SelectItem value="800">800 words</SelectItem>
-                          <SelectItem value="1200">1200 words</SelectItem>
-                          <SelectItem value="1500">1500 words</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="tone">Tone</Label>
-                      <Select
-                        value={formData.tone}
-                        onValueChange={(value) => handleInputChange('tone', value)}
-                        disabled={isGenerating}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="professional">Professional</SelectItem>
-                          <SelectItem value="casual">Casual</SelectItem>
-                          <SelectItem value="friendly">Friendly</SelectItem>
-                          <SelectItem value="authoritative">Authoritative</SelectItem>
-                          <SelectItem value="humorous">Humorous</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Progress Section */}
-                {isGenerating && (
-                  <div className="space-y-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                      <span className="text-sm font-medium text-blue-900">{currentStep}</span>
-                    </div>
-                    <Progress value={progress} className="h-2" />
-                    <div className="text-xs text-blue-600">
-                      This may take 1-2 minutes for AI processing...
-                    </div>
-                  </div>
-                )}
-
-                <Button 
-                  onClick={generateCompleteBlog}
-                  disabled={isGenerating || !formData.title.trim() || !formData.topic.trim()}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                  size="lg"
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="mr-2 h-4 w-4" />
-                      Generate Complete Blog Post
-                    </>
-                  )}
-                </Button>
-
-                <div className="text-xs text-muted-foreground text-center">
-                  This will generate content, create a hero image, and publish to Storyblok
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Preview Tab */}
-          <TabsContent value="preview">
-            {generatedContent?.blogContent && (
-              <div className="max-w-4xl mx-auto space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <PenTool className="h-5 w-5" />
-                        Blog Preview
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => copyToClipboard(generateMarkdownContent())}
-                        >
-                          <Copy className="mr-2 h-4 w-4" />
-                          Copy Markdown
-                        </Button>
-                      </div>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Hero Image */}
-                    {generatedContent.imageUrl && (
-                      <div className="mb-6">
-                        <img
-                          src={`${process.env.NEXT_PUBLIC_BASE_URL || ''}${generatedContent.imageUrl}`}
-                          alt="Hero"
-                          className="w-full h-64 object-cover rounded-lg border"
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Left Column - Topic Input */}
+                    <div className="space-y-6">
+                      <div>
+                        <Label className="text-base font-medium mb-3 block">Blog Topic & Ideas</Label>
+                        <AIPrompt
+                          onSubmit={handleTopicSubmit}
+                          placeholder="Describe your blog post idea in detail. What should it cover? What's the main message? Include any specific points you want to address..."
+                          isLoading={isGenerating}
                         />
                       </div>
-                    )}
-
-                    {/* Blog Content */}
-                    <div className="prose lg:prose-lg max-w-none">
-                      <h1>{generatedContent.blogContent.title}</h1>
                       
-                      <div className="mb-6">
-                        <h2 className="text-xl font-semibold mb-3">Introduction</h2>
-                        <div className="whitespace-pre-wrap">{generatedContent.blogContent.introduction}</div>
+                      {formData.topic && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          className="p-4 rounded-lg bg-muted/50 border"
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <Zap className="h-4 w-4 text-green-500" />
+                            <span className="text-sm font-medium text-green-700">Topic Captured</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground line-clamp-3">
+                            {formData.topic}
+                          </p>
+                        </motion.div>
+                      )}
+                    </div>
+
+                    {/* Right Column - Configuration */}
+                    <div className="space-y-6">
+                      <div>
+                        <Label htmlFor="title" className="text-base font-medium">Blog Title</Label>
+                        <Input
+                          id="title"
+                          value={formData.title}
+                          onChange={(e) => handleInputChange('title', e.target.value)}
+                          placeholder="Enter your blog post title..."
+                          disabled={isGenerating}
+                          className="mt-2"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="keywords" className="text-base font-medium">Keywords (SEO)</Label>
+                        <Input
+                          id="keywords"
+                          value={formData.keywords}
+                          onChange={(e) => handleInputChange('keywords', e.target.value)}
+                          placeholder="SEO keywords, separated by commas"
+                          disabled={isGenerating}
+                          className="mt-2"
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-base font-medium">Word Count</Label>
+                          <Select
+                            value={formData.wordCount.toString()}
+                            onValueChange={(value) => handleInputChange('wordCount', parseInt(value))}
+                            disabled={isGenerating}
+                          >
+                            <SelectTrigger className="mt-2">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="500">500 words</SelectItem>
+                              <SelectItem value="800">800 words</SelectItem>
+                              <SelectItem value="1200">1200 words</SelectItem>
+                              <SelectItem value="1500">1500 words</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div>
+                          <Label className="text-base font-medium">Tone</Label>
+                          <Select
+                            value={formData.tone}
+                            onValueChange={(value) => handleInputChange('tone', value)}
+                            disabled={isGenerating}
+                          >
+                            <SelectTrigger className="mt-2">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="professional">Professional</SelectItem>
+                              <SelectItem value="casual">Casual</SelectItem>
+                              <SelectItem value="friendly">Friendly</SelectItem>
+                              <SelectItem value="authoritative">Authoritative</SelectItem>
+                              <SelectItem value="humorous">Humorous</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Progress Section */}
+                  {isGenerating && (
+                    <motion.div 
+                      className="space-y-4 p-6 rounded-xl bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        >
+                          <Layers className="h-5 w-5 text-purple-600" />
+                        </motion.div>
+                        <AITextLoading text={currentStep} />
+                      </div>
+                      <Progress value={progress} className="h-3" />
+                      <div className="text-xs text-purple-600 text-center">
+                        This may take 1-2 minutes for AI processing...
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Generate Button */}
+                  <div className="text-center">
+                    <GradientButton
+                      onClick={generateCompleteBlog}
+                      disabled={isGenerating || !formData.title.trim() || !formData.topic.trim()}
+                      size="lg"
+                      isLoading={isGenerating}
+                      className="px-12"
+                    >
+                      {isGenerating ? 'Generating...' : (
+                        <>
+                          <Sparkles className="mr-2 h-5 w-5" />
+                          Generate Complete Blog Post
+                        </>
+                      )}
+                    </GradientButton>
+                    <p className="text-xs text-muted-foreground mt-3">
+                      This will generate content, create a hero image, and publish to Storyblok
+                    </p>
+                  </div>
+                </div>
+              </LiquidGlassCard>
+            </motion.div>
+          )}
+
+          {/* Preview Tab */}
+          {activeTab === 'preview' && generatedContent?.blogContent && (
+            <motion.div
+              key="preview"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.5 }}
+            >
+              <LiquidGlassCard className="max-w-5xl mx-auto">
+                <div className="space-y-6">
+                  {/* Preview Header */}
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-bold flex items-center gap-2">
+                      <PenTool className="h-6 w-6 text-blue-600" />
+                      Blog Preview
+                    </h2>
+                    <div className="flex items-center gap-2">
+                      <GradientButton
+                        onClick={() => copyToClipboard(generateMarkdownContent())}
+                        size="sm"
+                        variant="secondary"
+                      >
+                        <Copy className="mr-2 h-4 w-4" />
+                        Copy Markdown
+                      </GradientButton>
+                    </div>
+                  </div>
+
+                  {/* Hero Image */}
+                  {generatedContent.imageUrl && (
+                    <motion.div 
+                      className="rounded-xl overflow-hidden"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_BASE_URL || ''}${generatedContent.imageUrl}`}
+                        alt="Generated Hero Image"
+                        className="w-full h-64 object-cover"
+                      />
+                    </motion.div>
+                  )}
+
+                  {/* Blog Content */}
+                  <div className="prose lg:prose-lg max-w-none">
+                    <ShimmerText className="text-4xl font-bold mb-6">
+                      {generatedContent.blogContent.title}
+                    </ShimmerText>
+                    
+                    <div className="space-y-8">
+                      <div>
+                        <h3 className="text-xl font-semibold mb-4 text-blue-600">Introduction</h3>
+                        <div className="whitespace-pre-wrap text-muted-foreground leading-relaxed">
+                          {generatedContent.blogContent.introduction}
+                        </div>
                       </div>
 
                       {generatedContent.blogContent.sections?.map((section, index) => (
-                        <div key={index} className="mb-6">
-                          <h2 className="text-xl font-semibold mb-3">{section.heading}</h2>
-                          <div className="whitespace-pre-wrap">{section.content}</div>
-                        </div>
+                        <motion.div 
+                          key={index}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.1 * index }}
+                        >
+                          <h3 className="text-xl font-semibold mb-4 text-blue-600">{section.heading}</h3>
+                          <div className="whitespace-pre-wrap text-muted-foreground leading-relaxed">
+                            {section.content}
+                          </div>
+                        </motion.div>
                       ))}
 
-                      <div className="mb-6">
-                        <h2 className="text-xl font-semibold mb-3">Conclusion</h2>
-                        <div className="whitespace-pre-wrap">{generatedContent.blogContent.conclusion}</div>
-                      </div>
-
-                      <Separator className="my-6" />
-
-                      <div className="bg-slate-50 p-4 rounded-lg">
-                        <h3 className="font-medium mb-2">SEO Meta Description</h3>
-                        <p className="text-sm text-muted-foreground">{generatedContent.blogContent.metaDescription}</p>
+                      <div>
+                        <h3 className="text-xl font-semibold mb-4 text-blue-600">Conclusion</h3>
+                        <div className="whitespace-pre-wrap text-muted-foreground leading-relaxed">
+                          {generatedContent.blogContent.conclusion}
+                        </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
 
-                {/* Generation Results Summary */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Generation Results</CardTitle>
-                  </CardHeader>
-                  <CardContent>
+                    <Separator className="my-8" />
+
+                    <div className="bg-muted/30 p-6 rounded-xl border">
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-purple-600" />
+                        SEO Meta Description
+                      </h4>
+                      <p className="text-sm text-muted-foreground italic">
+                        "{generatedContent.blogContent.metaDescription}"
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Generation Results */}
+                  <LiquidGlassCard blur="sm">
+                    <h3 className="font-semibold mb-4">Generation Results</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="h-5 w-5 text-green-600" />
@@ -428,14 +547,18 @@ export default function AIBlogStudio() {
                         ) : (
                           <>
                             <AlertCircle className="h-5 w-5 text-yellow-600" />
-                            <span>Storyblok Failed</span>
+                            <span>Storyblok Pending</span>
                           </>
                         )}
                       </div>
                     </div>
 
                     {generatedContent.storyblokResult?.success && (
-                      <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <motion.div 
+                        className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                      >
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium text-green-800">
                             Story ID: {generatedContent.storyblokResult.storyId}
@@ -443,45 +566,61 @@ export default function AIBlogStudio() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setActiveTab('storyblok')}
+                            onClick={() => setActiveTab('published')}
                           >
                             <ExternalLink className="mr-2 h-4 w-4" />
-                            View in Storyblok
+                            View Published
                           </Button>
                         </div>
-                      </div>
+                      </motion.div>
                     )}
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-          </TabsContent>
+                  </LiquidGlassCard>
+                </div>
+              </LiquidGlassCard>
+            </motion.div>
+          )}
 
-          {/* Storyblok Tab */}
-          <TabsContent value="storyblok">
-            {generatedContent?.storyblokResult?.success && (
-              <Card className="max-w-2xl mx-auto">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Upload className="h-5 w-5 text-green-600" />
-                    Published to Storyblok
-                  </CardTitle>
-                  <CardDescription>
-                    Your blog post has been successfully created in Storyblok CMS
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <div>
-                      <div className="font-medium text-green-900">Story Created</div>
-                      <div className="text-sm text-green-700">ID: {generatedContent.storyblokResult.storyId}</div>
-                    </div>
-                    <Badge className="bg-green-100 text-green-800">Draft</Badge>
+          {/* Published Tab */}
+          {activeTab === 'published' && generatedContent?.storyblokResult?.success && (
+            <motion.div
+              key="published"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.5 }}
+            >
+              <LiquidGlassCard className="max-w-3xl mx-auto text-center">
+                <div className="space-y-6">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", bounce: 0.5 }}
+                  >
+                    <CheckCircle2 className="h-16 w-16 text-green-600 mx-auto mb-4" />
+                  </motion.div>
+                  
+                  <div>
+                    <ShimmerText className="text-3xl font-bold mb-2">
+                      Successfully Published!
+                    </ShimmerText>
+                    <p className="text-muted-foreground">
+                      Your blog post has been created and published to Storyblok CMS
+                    </p>
                   </div>
 
-                  <div className="space-y-2">
-                    <h3 className="font-medium">Next Steps:</h3>
-                    <ul className="text-sm text-muted-foreground space-y-1">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                    <div className="space-y-3">
+                      <div className="font-medium text-green-900">Story Created</div>
+                      <div className="text-sm text-green-700">
+                        ID: {generatedContent.storyblokResult.storyId}
+                      </div>
+                      <Badge className="bg-green-100 text-green-800">Draft</Badge>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 text-sm text-muted-foreground">
+                    <h4 className="font-medium text-foreground">Next Steps:</h4>
+                    <ul className="space-y-1">
                       <li>• Login to your Storyblok dashboard</li>
                       <li>• Review and edit the content if needed</li>
                       <li>• Publish when ready to go live</li>
@@ -490,21 +629,28 @@ export default function AIBlogStudio() {
 
                   <Separator />
 
-                  <div className="text-center">
-                    <Button
-                      variant="outline"
-                      onClick={() => setActiveTab('generator')}
-                      className="w-full"
-                    >
-                      Generate Another Blog Post
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-        </Tabs>
+                  <GradientButton
+                    onClick={() => {
+                      setActiveTab('generator');
+                      setGeneratedContent(null);
+                      setFormData({
+                        title: '',
+                        topic: '',
+                        keywords: '',
+                        wordCount: 800,
+                        tone: 'professional'
+                      });
+                    }}
+                    className="w-full"
+                  >
+                    Generate Another Blog Post
+                  </GradientButton>
+                </div>
+              </LiquidGlassCard>
+            </motion.div>
+          )}
+        </div>
       </div>
-    </div>
+    </BeamsBackground>
   );
 }
