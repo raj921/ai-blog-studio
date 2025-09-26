@@ -257,6 +257,99 @@ async function handleGenerateCompleteAsync(body) {
   });
 }
 
+async function processCompleteGeneration(jobId, formData) {
+  try {
+    const { title, topic, keywords, wordCount, tone } = formData;
+    
+    // Update progress: Step 1
+    jobStore.set(jobId, {
+      ...jobStore.get(jobId),
+      status: 'processing',
+      progress: 20,
+      step: 'Generating blog content with GPT-5...'
+    });
+
+    const blogContent = await generateBlogPost({
+      title,
+      topic,
+      keywords: keywords || [],
+      wordCount: wordCount || 800,
+      tone: tone || 'professional'
+    });
+
+    // Update progress: Step 2
+    jobStore.set(jobId, {
+      ...jobStore.get(jobId),
+      progress: 50,
+      step: 'Creating hero image...'
+    });
+
+    let imageUrl = '';
+    if (blogContent.imagePrompt) {
+      const imageResult = await generateHeroImage(blogContent.imagePrompt, blogContent.title);
+      if (imageResult.success) {
+        imageUrl = imageResult.imageUrl;
+      }
+    }
+
+    // Update progress: Step 3
+    jobStore.set(jobId, {
+      ...jobStore.get(jobId),
+      progress: 80,
+      step: 'Publishing to Storyblok CMS...'
+    });
+
+    let storyblokResult = null;
+    
+    try {
+      let storyblokImageUrl = '';
+      
+      if (imageUrl) {
+        const imagePath = `/app/public${imageUrl}`;
+        const filename = `blog-hero-${Date.now()}.png`;
+        
+        const uploadResult = await uploadImageToStoryblok(imagePath, filename);
+        if (uploadResult.success) {
+          storyblokImageUrl = uploadResult.url;
+        }
+      }
+      
+      const storyData = {
+        ...blogContent,
+        heroImage: storyblokImageUrl
+      };
+      
+      storyblokResult = await createStoryblokBlogPost(storyData);
+    } catch (storyblokError) {
+      console.warn('Storyblok creation failed:', storyblokError.message);
+      storyblokResult = { success: false, error: 'Storyblok integration failed but content generated successfully' };
+    }
+
+    // Complete the job
+    jobStore.set(jobId, {
+      ...jobStore.get(jobId),
+      status: 'completed',
+      progress: 100,
+      step: 'Complete! Blog post ready.',
+      result: {
+        blogContent,
+        imageUrl,
+        storyblokResult
+      },
+      completedTime: new Date().toISOString()
+    });
+
+  } catch (error) {
+    // Mark job as failed
+    jobStore.set(jobId, {
+      ...jobStore.get(jobId),
+      status: 'failed',
+      error: error.message,
+      failedTime: new Date().toISOString()
+    });
+  }
+}
+
 async function handlePublishStory(storyId) {
   try {
     const result = await publishStoryblokBlogPost(storyId);
