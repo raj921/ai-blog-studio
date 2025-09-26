@@ -317,14 +317,14 @@ export default function AIBlogStudio() {
                     {/* Right Column - Configuration */}
                     <div className="space-y-6">
                       <div>
-                        <Label htmlFor="title" className="text-base font-medium">Blog Title</Label>
+                        <Label htmlFor="title" className="text-base font-medium">Blog Title *</Label>
                         <Input
                           id="title"
                           value={formData.title}
                           onChange={(e) => handleInputChange('title', e.target.value)}
                           placeholder="Enter your blog post title..."
                           disabled={isGenerating}
-                          className="mt-2"
+                          className="mt-2 text-lg font-medium border-2 focus:border-purple-500/50 transition-all duration-300"
                         />
                       </div>
                       
