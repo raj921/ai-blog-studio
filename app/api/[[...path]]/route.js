@@ -79,7 +79,7 @@ export async function POST(request) {
         return await handlePublishToStoryblok(body);
         
       case 'generate-complete':
-        return await handleGenerateComplete(body);
+        return await handleGenerateCompleteAsync(body);
         
       case 'publish':
         const storyId = pathSegments[1];
