@@ -75,11 +75,16 @@ export default function AIBlogStudio() {
   };
 
   const generateCompleteBlog = async () => {
+    console.log('🚀 Generate button clicked!');
+    console.log('Form data:', { title: formData.title, topic: formData.topic });
+    
     if (!formData.title.trim() || !formData.topic.trim()) {
+      console.log('❌ Validation failed - missing required fields');
       setError('Title and topic are required');
       return;
     }
 
+    console.log('✅ Validation passed, starting generation...');
     setIsGenerating(true);
     setError('');
     setSuccess('');
