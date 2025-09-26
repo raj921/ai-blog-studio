@@ -16,8 +16,8 @@ import time
 import os
 from datetime import datetime
 
-# Get the base URL from environment or use default
-BASE_URL = os.getenv('NEXT_PUBLIC_BASE_URL', 'https://postwizard-3.preview.emergentagent.com')
+# Get the base URL from environment or use local for testing
+BASE_URL = 'http://localhost:3000'
 API_BASE = f"{BASE_URL}/api"
 
 class BlogStudioTester:
