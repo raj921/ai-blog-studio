@@ -20,17 +20,17 @@ export default function ShimmerText({
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="relative">
+      <div className="relative z-10">
         {children}
         <motion.div
-          className="absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+          className="absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none"
           initial={{ x: -shimmerWidth }}
           animate={{ x: shimmerWidth }}
           transition={{
-            duration: 2,
+            duration: 2.5,
             repeat: Infinity,
             ease: "linear",
-            repeatDelay: 3,
+            repeatDelay: 4,
           }}
           style={{ width: `${shimmerWidth}%` }}
         />
