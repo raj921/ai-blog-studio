@@ -109,6 +109,8 @@ export default function AIBlogStudio() {
         }
       }, 2000);
 
+      console.log('📡 Making API request to /api/generate-complete');
+      
       const response = await fetch('/api/generate-complete', {
         method: 'POST',
         headers: {
@@ -121,11 +123,33 @@ export default function AIBlogStudio() {
       });
 
       clearInterval(progressInterval);
+      
+      console.log('📥 Response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
+      });
 
-      const result = await response.json();
+      // Check if response is empty or malformed
+      const responseText = await response.text();
+      console.log('📄 Raw response text:', responseText);
+
+      if (!responseText || responseText.trim() === '') {
+        throw new Error('Empty response from server');
+      }
+
+      let result;
+      try {
+        result = JSON.parse(responseText);
+        console.log('✅ JSON parsed successfully:', result);
+      } catch (parseError) {
+        console.error('❌ JSON parsing failed:', parseError);
+        console.error('Response text that failed to parse:', responseText);
+        throw new Error(`Invalid JSON response: ${parseError.message}`);
+      }
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to generate blog');
+        throw new Error(result.error || `HTTP ${response.status}: ${response.statusText}`);
       }
       
       setGeneratedContent(result.data);
