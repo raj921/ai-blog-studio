@@ -396,6 +396,16 @@ export default function AIBlogStudio() {
 
                   {/* Generate Button */}
                   <div className="text-center">
+                    {(!formData.title.trim() || !formData.topic.trim()) && (
+                      <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+                        <div className="font-medium mb-1">⚠️ Required fields missing:</div>
+                        <ul className="text-xs">
+                          {!formData.title.trim() && <li>• Blog title is required</li>}
+                          {!formData.topic.trim() && <li>• Topic description is required</li>}
+                        </ul>
+                      </div>
+                    )}
+                    
                     <GradientButton
                       onClick={generateCompleteBlog}
                       disabled={isGenerating || !formData.title.trim() || !formData.topic.trim()}
