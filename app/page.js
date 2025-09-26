@@ -196,10 +196,8 @@ export default function AIBlogStudio() {
             >
               <Sparkles className="h-10 w-10 text-purple-600" />
             </motion.div>
-            <h1 className="text-5xl font-bold text-slate-800 dark:text-white">
-              <ShimmerText className="bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                AI Blog Studio
-              </ShimmerText>
+            <h1 className="text-5xl font-bold text-slate-900 dark:text-white">
+              AI Blog Studio
             </h1>
           </motion.div>
           <motion.p 
