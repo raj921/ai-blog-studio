@@ -401,7 +401,7 @@ export default function AIBlogStudio() {
                       disabled={isGenerating || !formData.title.trim() || !formData.topic.trim()}
                       size="lg"
                       isLoading={isGenerating}
-                      className="px-12"
+                      className="px-12 shadow-2xl shadow-purple-500/25"
                     >
                       {isGenerating ? 'Generating...' : (
                         <>
