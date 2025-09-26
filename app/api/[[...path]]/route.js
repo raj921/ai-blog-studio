@@ -3,6 +3,9 @@ import { generateBlogPost, generateHeroImage } from '../../../lib/blogGenerator'
 import { createStoryblokBlogPost, publishStoryblokBlogPost, uploadImageToStoryblok, getStoryblokBlogPosts, deleteStoryblokBlogPost } from '../../../lib/storyblok';
 import { v4 as uuidv4 } from 'uuid';
 
+// In-memory storage for job status (in production, use Redis or database)
+const jobStore = new Map();
+
 // Helper function to extract path segments
 function getPathSegments(request) {
   const url = new URL(request.url);
