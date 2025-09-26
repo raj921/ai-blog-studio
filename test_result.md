@@ -101,3 +101,124 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Test the AI Blog Studio MVP backend APIs comprehensively including health check, blog generation, image generation, complete generation flow, Storyblok integration, and error handling."
+
+backend:
+  - task: "Basic Health Check API"
+    implemented: true
+    working: "NA"
+    file: "/app/app/api/[[...path]]/route.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Initial assessment - /api/test endpoint implemented, needs testing to verify GPT-5, image generation, and Storyblok integrations are available"
+
+  - task: "Blog Generation API"
+    implemented: true
+    working: "NA"
+    file: "/app/app/api/[[...path]]/route.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Initial assessment - /api/generate-blog endpoint implemented with GPT-5 integration via emergentintegrations library, needs testing with realistic data"
+
+  - task: "Image Generation API"
+    implemented: true
+    working: "NA"
+    file: "/app/app/api/[[...path]]/route.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Initial assessment - /api/generate-image endpoint implemented using OpenAI image generation with gpt-image-1 model, needs testing"
+
+  - task: "Complete Generation Flow API"
+    implemented: true
+    working: "NA"
+    file: "/app/app/api/[[...path]]/route.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Initial assessment - /api/generate-complete endpoint implemented, combines blog generation, image creation, and Storyblok publishing, needs end-to-end testing"
+
+  - task: "Storyblok Integration"
+    implemented: true
+    working: "NA"
+    file: "/app/lib/storyblok.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Initial assessment - Storyblok integration implemented with create, publish, upload, get, and delete functions using Space ID 287411290755727, needs testing"
+
+  - task: "Blog Posts Management API"
+    implemented: true
+    working: "NA"
+    file: "/app/app/api/[[...path]]/route.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Initial assessment - GET /api/blog-posts and DELETE /api/blog-posts/{id} endpoints implemented, needs testing"
+
+  - task: "Publish to Storyblok API"
+    implemented: true
+    working: "NA"
+    file: "/app/app/api/[[...path]]/route.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Initial assessment - /api/publish-to-storyblok and /api/publish/{storyId} endpoints implemented, needs testing"
+
+frontend:
+  - task: "Frontend UI"
+    implemented: true
+    working: "NA"
+    file: "/app/app/page.js"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Frontend testing not required as per instructions - focus on backend API testing only"
+
+metadata:
+  created_by: "testing_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Basic Health Check API"
+    - "Blog Generation API"
+    - "Image Generation API"
+    - "Complete Generation Flow API"
+    - "Storyblok Integration"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "testing"
+    message: "Starting comprehensive backend API testing for AI Blog Studio MVP. Will test all high-priority endpoints first: health check, blog generation, image generation, complete flow, and Storyblok integration. Environment configured with EMERGENT_LLM_KEY and Storyblok credentials."
