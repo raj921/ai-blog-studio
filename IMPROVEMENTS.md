@@ -36,10 +36,11 @@ This document summarizes all improvements made to the AI Blog Studio codebase.
   - Cleanup runs every 10 minutes
 - **Files**: `app/api/[[...path]]/route.js` (lines 12-24)
 
-### 5. Incorrect HTTP Method for Storyblok Publish ✅
-- **Issue**: Used GET request for publishing (should be PUT)
-- **Fix**: Changed to `axios.put()` with proper request body
-- **Files**: `lib/storyblok.js` (line 83)
+### 5. Storyblok Publish Method Verified ✅
+- **Issue**: Initially changed from GET to PUT, but Storyblok actually uses GET
+- **Fix**: Verified against official Storyblok docs - publish endpoint uses GET request
+- **Reference**: https://www.storyblok.com/docs/api/management/stories/publish-a-story
+- **Files**: `lib/storyblok.js` (line 83-92)
 
 ### 6. Image Validation ✅
 - **Issue**: No validation of generated images
