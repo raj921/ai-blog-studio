@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Eye, Sparkles, Edit } from 'lucide-react';
 import { useState } from 'react';
 
-export default function BlogPreview({ blogData, onSectionEdit, editingSection, onSectionUpdate }) {
+export default function BlogPreview({ blogData, imageUrl, onSectionEdit, editingSection, onSectionUpdate }) {
   const [hoveredSection, setHoveredSection] = useState(null);
 
   const SectionWrapper = ({ id, children, label }) => {
@@ -75,14 +75,28 @@ export default function BlogPreview({ blogData, onSectionEdit, editingSection, o
         </div>
       </div>
 
-      {/* Hero Image Placeholder */}
-      {blogData.heroImage && (
+      {/* Hero Image */}
+      {imageUrl && (
         <div className="relative h-96 bg-gradient-to-r from-purple-400 to-blue-500">
           <img
-            src={blogData.heroImage}
+            src={imageUrl}
             alt={blogData.title}
             className="w-full h-full object-cover"
           />
+          <div className="absolute bottom-4 right-4 bg-black/50 text-white text-xs px-3 py-1 rounded-full">
+            📸 From Unsplash
+          </div>
+        </div>
+      )}
+      
+      {/* No Image Placeholder */}
+      {!imageUrl && (
+        <div className="relative h-96 bg-gradient-to-r from-purple-400 to-blue-500 flex items-center justify-center">
+          <div className="text-center text-white">
+            <div className="text-6xl mb-4">🖼️</div>
+            <p className="text-lg font-medium">Hero Image</p>
+            <p className="text-sm opacity-75">Image will appear here when generated</p>
+          </div>
         </div>
       )}
 

@@ -27,6 +27,7 @@ export default function VisualEditor() {
   const jobId = searchParams.get('jobId');
   
   const [blogData, setBlogData] = useState(null);
+  const [imageUrl, setImageUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [previewMode, setPreviewMode] = useState('desktop'); // desktop, tablet, mobile
@@ -55,6 +56,7 @@ export default function VisualEditor() {
         
         if (data.status === 'completed' && data.result?.blogContent) {
           setBlogData(data.result.blogContent);
+          setImageUrl(data.result.imageUrl || '');
           setLoading(false);
         } else if (data.status === 'failed') {
           throw new Error('Blog generation failed');
@@ -243,6 +245,7 @@ export default function VisualEditor() {
           >
             <BlogPreview
               blogData={blogData}
+              imageUrl={imageUrl}
               onSectionEdit={setEditingSection}
               editingSection={editingSection}
               onSectionUpdate={handleSectionUpdate}
