@@ -46,6 +46,13 @@ export default function VisualEditor() {
         const response = await fetch(`/api/job-status/${jobId}`);
         const data = await response.json();
         
+        if (response.status === 404) {
+          // Job not found - expired or server restarted
+          alert('⚠️ Blog data not found. This happens when:\n\n1. The job is older than 1 hour (expired)\n2. The server was restarted\n\nPlease generate a new blog from the homepage.');
+          router.push('/');
+          return;
+        }
+        
         if (data.status === 'completed' && data.result?.blogContent) {
           setBlogData(data.result.blogContent);
           setLoading(false);
@@ -57,6 +64,7 @@ export default function VisualEditor() {
         }
       } catch (error) {
         console.error('Error fetching blog data:', error);
+        alert('Failed to load blog data. Please generate a new blog from the homepage.');
         router.push('/');
       }
     };
