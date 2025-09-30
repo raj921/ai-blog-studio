@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { generateBlogPost, generateHeroImage } from '../../../lib/blogGenerator';
+import { generateBlogPost, generateHeroImage } from '../../../lib/geminiGenerator';
 import { createStoryblokBlogPost, publishStoryblokBlogPost, uploadImageToStoryblok, getStoryblokBlogPosts, deleteStoryblokBlogPost } from '../../../lib/storyblok';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
@@ -61,14 +61,15 @@ export async function GET(request) {
         return NextResponse.json({ 
           message: 'AI Blog Studio API is working!',
           integrations: {
-            gpt5: 'Available',
-            imageGeneration: 'Available', 
+            geminiAI: process.env.GEMINI_API_KEY ? 'Available' : 'Missing',
+            imageGeneration: 'Not Available (Gemini does not support image generation)', 
             storyblok: 'Available'
           },
           environment: {
-            EMERGENT_LLM_KEY: process.env.EMERGENT_LLM_KEY ? 'Present' : 'Missing',
+            GEMINI_API_KEY: process.env.GEMINI_API_KEY ? 'Present' : 'Missing',
             NEXT_PUBLIC_STORYBLOK_SPACE_ID: process.env.NEXT_PUBLIC_STORYBLOK_SPACE_ID || 'Missing',
-            STORYBLOK_MANAGEMENT_TOKEN: process.env.STORYBLOK_MANAGEMENT_TOKEN ? 'Present' : 'Missing'
+            STORYBLOK_MANAGEMENT_TOKEN: process.env.STORYBLOK_MANAGEMENT_TOKEN ? 'Present' : 'Missing',
+            PYTHON_PATH: process.env.PYTHON_PATH || 'python3 (default)'
           }
         });
         
