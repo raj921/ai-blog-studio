@@ -233,7 +233,7 @@ export default function AIBlogStudio() {
           </motion.div>
           <motion.p 
             className="text-lg text-muted-foreground max-w-2xl mx-auto"
-            initial={{ opacity: 0 }}
+            initial={{ opacity: 1 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.8 }}
           >
