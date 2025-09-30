@@ -2,9 +2,28 @@ import { NextResponse } from 'next/server';
 import { generateBlogPost, generateHeroImage } from '../../../lib/blogGenerator';
 import { createStoryblokBlogPost, publishStoryblokBlogPost, uploadImageToStoryblok, getStoryblokBlogPosts, deleteStoryblokBlogPost } from '../../../lib/storyblok';
 import { v4 as uuidv4 } from 'uuid';
+import path from 'path';
+import { validateBlogInput, validateImagePrompt, validateStoryId } from '../../../lib/validation';
+import { logger, getUserFriendlyError } from '../../../lib/logger';
 
 // In-memory storage for job status (in production, use Redis or database)
 const jobStore = new Map();
+
+// Cleanup old jobs (older than 1 hour)
+const JOB_EXPIRY_TIME = 60 * 60 * 1000; // 1 hour in milliseconds
+
+function cleanupOldJobs() {
+  const now = Date.now();
+  for (const [jobId, job] of jobStore.entries()) {
+    const jobTime = new Date(job.startTime).getTime();
+    if (now - jobTime > JOB_EXPIRY_TIME) {
+      jobStore.delete(jobId);
+    }
+  }
+}
+
+// Run cleanup every 10 minutes
+setInterval(cleanupOldJobs, 10 * 60 * 1000);
 
 // Helper function to extract path segments
 function getPathSegments(request) {
@@ -57,8 +76,11 @@ export async function GET(request) {
         return NextResponse.json({ error: 'Endpoint not found' }, { status: 404 });
     }
   } catch (error) {
-    console.error('GET API Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logger.error('GET API Error', error);
+    return NextResponse.json({ 
+      error: getUserFriendlyError(error),
+      technicalError: process.env.NODE_ENV === 'development' ? error.message : undefined
+    }, { status: 500 });
   }
 }
 
@@ -83,17 +105,21 @@ export async function POST(request) {
         
       case 'publish':
         const storyId = pathSegments[1];
-        if (!storyId) {
-          return NextResponse.json({ error: 'Story ID is required' }, { status: 400 });
+        const storyValidation = validateStoryId(storyId);
+        if (!storyValidation.valid) {
+          return NextResponse.json({ error: storyValidation.errors[0] }, { status: 400 });
         }
-        return await handlePublishStory(storyId);
+        return await handlePublishStory(storyValidation.data);
         
       default:
         return NextResponse.json({ error: 'Endpoint not found' }, { status: 404 });
     }
   } catch (error) {
-    console.error('POST API Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logger.error('POST API Error', error);
+    return NextResponse.json({ 
+      error: getUserFriendlyError(error),
+      technicalError: process.env.NODE_ENV === 'development' ? error.message : undefined
+    }, { status: 500 });
   }
 }
 
@@ -104,26 +130,36 @@ export async function DELETE(request) {
     const storyId = pathSegments[1];
 
     if (endpoint === 'blog-posts' && storyId) {
-      const result = await deleteStoryblokBlogPost(storyId);
+      const storyValidation = validateStoryId(storyId);
+      if (!storyValidation.valid) {
+        return NextResponse.json({ error: storyValidation.errors[0] }, { status: 400 });
+      }
+      const result = await deleteStoryblokBlogPost(storyValidation.data);
       return NextResponse.json(result);
     }
 
     return NextResponse.json({ error: 'Invalid endpoint' }, { status: 404 });
   } catch (error) {
-    console.error('DELETE API Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logger.error('DELETE API Error', error);
+    return NextResponse.json({ 
+      error: getUserFriendlyError(error),
+      technicalError: process.env.NODE_ENV === 'development' ? error.message : undefined
+    }, { status: 500 });
   }
 }
 
 // Handler functions
 async function handleGenerateBlog(body) {
-  const { title, topic, keywords, wordCount, tone } = body;
-  
-  if (!title || !topic) {
+  // Validate and sanitize input
+  const validation = validateBlogInput(body);
+  if (!validation.valid) {
     return NextResponse.json({ 
-      error: 'Missing required fields: title and topic are required' 
+      error: 'Invalid input',
+      details: validation.errors 
     }, { status: 400 });
   }
+  
+  const { title, topic, keywords, wordCount, tone } = validation.data;
 
   try {
     const blogContent = await generateBlogPost({
@@ -147,13 +183,16 @@ async function handleGenerateBlog(body) {
 }
 
 async function handleGenerateImage(body) {
-  const { prompt, title } = body;
-  
-  if (!prompt) {
+  // Validate and sanitize input
+  const validation = validateImagePrompt(body.prompt, body.title);
+  if (!validation.valid) {
     return NextResponse.json({ 
-      error: 'Image prompt is required' 
+      error: 'Invalid input',
+      details: validation.errors 
     }, { status: 400 });
   }
+  
+  const { prompt, title } = validation.data;
 
   try {
     const result = await generateHeroImage(prompt, title);
@@ -189,7 +228,7 @@ async function handlePublishToStoryblok(body) {
     
     // Upload image to Storyblok if provided
     if (imageUrl) {
-      const imagePath = `/app/public${imageUrl}`;
+      const imagePath = path.join('public', imageUrl.replace(/^\//, ''));
       const filename = `blog-hero-${Date.now()}.png`;
       
       const uploadResult = await uploadImageToStoryblok(imagePath, filename);
@@ -226,11 +265,12 @@ async function handlePublishToStoryblok(body) {
 }
 
 async function handleGenerateCompleteAsync(body) {
-  const { title, topic, keywords, wordCount, tone } = body;
-  
-  if (!title || !topic) {
+  // Validate and sanitize input
+  const validation = validateBlogInput(body);
+  if (!validation.valid) {
     return NextResponse.json({ 
-      error: 'Missing required fields: title and topic are required' 
+      error: 'Invalid input',
+      details: validation.errors 
     }, { status: 400 });
   }
 
@@ -247,7 +287,7 @@ async function handleGenerateCompleteAsync(body) {
   });
 
   // Start the async process (don't await it)
-  processCompleteGeneration(jobId, { title, topic, keywords, wordCount, tone });
+  processCompleteGeneration(jobId, validation.data);
 
   // Return job ID immediately
   return NextResponse.json({
@@ -258,9 +298,13 @@ async function handleGenerateCompleteAsync(body) {
 }
 
 async function processCompleteGeneration(jobId, formData) {
+  const { title, topic, keywords, wordCount, tone } = formData;
+  let blogContent = null;
+  let imageUrl = '';
+  let storyblokResult = null;
+  const errors = [];
+  
   try {
-    const { title, topic, keywords, wordCount, tone } = formData;
-    
     // Update progress: Step 1
     jobStore.set(jobId, {
       ...jobStore.get(jobId),
@@ -269,13 +313,18 @@ async function processCompleteGeneration(jobId, formData) {
       step: 'Generating blog content with GPT-5...'
     });
 
-    const blogContent = await generateBlogPost({
-      title,
-      topic,
-      keywords: keywords || [],
-      wordCount: wordCount || 800,
-      tone: tone || 'professional'
-    });
+    try {
+      blogContent = await generateBlogPost({
+        title,
+        topic,
+        keywords: keywords || [],
+        wordCount: wordCount || 800,
+        tone: tone || 'professional'
+      });
+    } catch (blogError) {
+      errors.push({ step: 'blog_generation', error: blogError.message });
+      throw new Error('Blog generation failed: ' + blogError.message);
+    }
 
     // Update progress: Step 2
     jobStore.set(jobId, {
@@ -284,11 +333,17 @@ async function processCompleteGeneration(jobId, formData) {
       step: 'Creating hero image...'
     });
 
-    let imageUrl = '';
     if (blogContent.imagePrompt) {
-      const imageResult = await generateHeroImage(blogContent.imagePrompt, blogContent.title);
-      if (imageResult.success) {
-        imageUrl = imageResult.imageUrl;
+      try {
+        const imageResult = await generateHeroImage(blogContent.imagePrompt, blogContent.title);
+        if (imageResult.success) {
+          imageUrl = imageResult.imageUrl;
+        } else {
+          errors.push({ step: 'image_generation', error: imageResult.error });
+        }
+      } catch (imageError) {
+        errors.push({ step: 'image_generation', error: imageError.message });
+        // Continue without image - not critical
       }
     }
 
@@ -298,19 +353,22 @@ async function processCompleteGeneration(jobId, formData) {
       progress: 80,
       step: 'Publishing to Storyblok CMS...'
     });
-
-    let storyblokResult = null;
     
     try {
       let storyblokImageUrl = '';
       
       if (imageUrl) {
-        const imagePath = `/app/public${imageUrl}`;
+        const imagePath = path.join('public', imageUrl.replace(/^\//, ''));
         const filename = `blog-hero-${Date.now()}.png`;
         
-        const uploadResult = await uploadImageToStoryblok(imagePath, filename);
-        if (uploadResult.success) {
-          storyblokImageUrl = uploadResult.url;
+        try {
+          const uploadResult = await uploadImageToStoryblok(imagePath, filename);
+          if (uploadResult.success) {
+            storyblokImageUrl = uploadResult.url;
+          }
+        } catch (uploadError) {
+          errors.push({ step: 'image_upload', error: uploadError.message });
+          // Continue with local image URL
         }
       }
       
@@ -321,30 +379,45 @@ async function processCompleteGeneration(jobId, formData) {
       
       storyblokResult = await createStoryblokBlogPost(storyData);
     } catch (storyblokError) {
-      console.warn('Storyblok creation failed:', storyblokError.message);
-      storyblokResult = { success: false, error: 'Storyblok integration failed but content generated successfully' };
+      errors.push({ step: 'storyblok_publish', error: storyblokError.message });
+      storyblokResult = { 
+        success: false, 
+        error: 'Storyblok integration failed but content generated successfully' 
+      };
     }
 
-    // Complete the job
+    // Complete the job with partial results if needed
+    const hasContent = blogContent !== null;
+    const status = hasContent ? 'completed' : 'failed';
+    
     jobStore.set(jobId, {
       ...jobStore.get(jobId),
-      status: 'completed',
+      status: status,
       progress: 100,
-      step: 'Complete! Blog post ready.',
+      step: hasContent ? 'Complete! Blog post ready.' : 'Failed to generate content',
       result: {
         blogContent,
         imageUrl,
-        storyblokResult
+        storyblokResult,
+        errors: errors.length > 0 ? errors : undefined,
+        partialSuccess: hasContent && errors.length > 0
       },
       completedTime: new Date().toISOString()
     });
 
   } catch (error) {
-    // Mark job as failed
+    // Mark job as failed with any partial results
     jobStore.set(jobId, {
       ...jobStore.get(jobId),
       status: 'failed',
       error: error.message,
+      result: {
+        blogContent,
+        imageUrl,
+        storyblokResult,
+        errors: errors,
+        partialSuccess: blogContent !== null
+      },
       failedTime: new Date().toISOString()
     });
   }
