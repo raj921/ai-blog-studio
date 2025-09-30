@@ -51,6 +51,7 @@ export default function AIBlogStudio() {
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState('');
   const [generatedContent, setGeneratedContent] = useState(null);
+  const [currentJobId, setCurrentJobId] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -115,6 +116,7 @@ export default function AIBlogStudio() {
 
       const jobId = jobData.jobId;
       console.log('🆔 Job ID:', jobId);
+      setCurrentJobId(jobId);
 
       // Step 2: Poll for job status
       let completed = false;
@@ -483,6 +485,14 @@ export default function AIBlogStudio() {
                       Blog Preview
                     </h2>
                     <div className="flex items-center gap-2">
+                      <Button
+                        onClick={() => window.location.href = `/editor?jobId=${currentJobId}`}
+                        size="sm"
+                        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                      >
+                        <Wand2 className="mr-2 h-4 w-4" />
+                        Open in AI Visual Editor
+                      </Button>
                       <GradientButton
                         onClick={() => copyToClipboard(generateMarkdownContent())}
                         size="sm"

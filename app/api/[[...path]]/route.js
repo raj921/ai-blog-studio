@@ -111,6 +111,9 @@ export async function POST(request) {
           return NextResponse.json({ error: storyValidation.errors[0] }, { status: 400 });
         }
         return await handlePublishStory(storyValidation.data);
+      
+      case 'ai-edit':
+        return await handleAIEdit(body);
         
       default:
         return NextResponse.json({ error: 'Endpoint not found' }, { status: 404 });
@@ -442,6 +445,72 @@ async function handlePublishStory(storyId) {
   } catch (error) {
     return NextResponse.json({ 
       error: `Publishing failed: ${error.message}` 
+    }, { status: 500 });
+  }
+}
+
+async function handleAIEdit(body) {
+  const { prompt, sectionId } = body;
+  
+  if (!prompt) {
+    return NextResponse.json({ 
+      error: 'Prompt is required' 
+    }, { status: 400 });
+  }
+
+  try {
+    // Use Gemini to regenerate the content
+    const { exec } = await import('child_process');
+    const { promisify } = await import('util');
+    const execPromise = promisify(exec);
+    
+    const timestamp = Date.now();
+    const scriptPath = `/tmp/ai_edit_${timestamp}.py`;
+    
+    const pythonScript = `
+import google.generativeai as genai
+import os
+
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+model = genai.GenerativeModel('gemini-2.0-flash-exp')
+
+prompt = """${prompt.replace(/"/g, '\\"').replace(/\n/g, '\\n')}
+
+Only return the improved content, nothing else. No explanations, no markdown formatting, just the pure text."""
+
+response = model.generate_content(prompt)
+print(response.text)
+`;
+
+    const fs = await import('fs');
+    fs.writeFileSync(scriptPath, pythonScript);
+
+    const env = {
+      ...process.env,
+      GEMINI_API_KEY: process.env.GEMINI_API_KEY
+    };
+
+    const pythonPath = process.env.PYTHON_PATH || 'python3';
+    const { stdout, stderr } = await execPromise(`${pythonPath} ${scriptPath}`, { 
+      env, 
+      cwd: process.cwd(),
+      timeout: 30000 
+    });
+
+    fs.unlinkSync(scriptPath);
+
+    if (stderr && !stderr.includes('WARNING')) {
+      throw new Error(stderr);
+    }
+
+    return NextResponse.json({
+      success: true,
+      content: stdout.trim()
+    });
+
+  } catch (error) {
+    return NextResponse.json({ 
+      error: `AI edit failed: ${error.message}` 
     }, { status: 500 });
   }
 }
